@@ -1,0 +1,36 @@
+{
+  "name": "homebrew-ui-remote-config",
+  "description": "Remote Agent configuration for Homebrew UI development",
+  "setupScript": "./setup-remote-env.sh",
+  "environment": {
+    "NODE_ENV": "development",
+    "ELECTRON_IS_DEV": "1"
+  },
+  "requiredTools": [
+    "node",
+    "npm",
+    "brew",
+    "git"
+  ],
+  "developmentCommands": {
+    "install": "npm install",
+    "start": "npm start",
+    "dev": "npm run dev",
+    "build": "npm run build",
+    "test": "node test-homebrew.js",
+    "lint": "npm run lint",
+    "clean": "rm -rf node_modules dist build && npm install"
+  },
+  "troubleshooting": {
+    "electronIssues": [
+      "npm run build:main && npm run build:preload",
+      "rm -rf node_modules && npm install",
+      "npx electron ."
+    ],
+    "homebrewIssues": [
+      "brew doctor",
+      "brew update",
+      "brew upgrade"
+    ]
+  }
+}
