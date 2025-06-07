@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homebrew UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            background-color: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .app {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header {
+            background-color: #ffffff;
+            padding: 16px 24px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .app-header h1 {
+            color: #333;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .language-selector {
+            display: flex;
+            gap: 8px;
+        }
+
+        .language-selector button {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .language-selector button:hover {
+            background-color: #f0f0f0;
+            border-color: #007AFF;
+        }
+
+        .tab-navigation {
+            background-color: #ffffff;
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .tab-navigation button {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-navigation button:hover {
+            background-color: #f8f8f8;
+            color: #333;
+        }
+
+        .tab-navigation button.active {
+            color: #007AFF;
+            border-bottom-color: #007AFF;
+            background-color: #f8f8f8;
+        }
+
+        .app-main {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            background-color: #fff;
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-bar input:focus {
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .search-bar button {
+            padding: 12px 24px;
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .search-bar button:hover:not(:disabled) {
+            background-color: #0056CC;
+        }
+
+        .search-bar button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .package-list {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .package-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        .package-item:last-child {
+            border-bottom: none;
+        }
+
+        .package-item:hover {
+            background-color: #f8f8f8;
+        }
+
+        .package-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .package-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .install-btn {
+            padding: 8px 16px;
+            background-color: #34C759;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .install-btn:hover:not(:disabled) {
+            background-color: #28A745;
+        }
+
+        .uninstall-btn {
+            padding: 8px 16px;
+            background-color: #FF3B30;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .uninstall-btn:hover:not(:disabled) {
+            background-color: #DC3545;
+        }
+
+        .install-btn:disabled,
+        .uninstall-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .tab-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            background-color: #fff;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-header h2 {
+            color: #333;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .tab-header button {
+            padding: 8px 16px;
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .tab-header button:hover:not(:disabled) {
+            background-color: #0056CC;
+        }
+
+        .maintenance-tab h2 {
+            color: #333;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .maintenance-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background-color: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .maintenance-actions button {
+            padding: 16px 24px;
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .maintenance-actions button:hover:not(:disabled) {
+            background-color: #0056CC;
+        }
+
+        .maintenance-actions button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="app-header">
+            <h1 id="app-title">Homebrew 图形界面</h1>
+            <div class="language-selector">
+                <button onclick="changeLanguage('zh-CN')">简体中文</button>
+                <button onclick="changeLanguage('zh-TW')">繁體中文</button>
+                <button onclick="changeLanguage('en')">English</button>
+            </div>
+        </header>
+
+        <nav class="tab-navigation">
+            <button id="search-tab-btn" class="active" onclick="setActiveTab('search')">
+                <span data-i18n="search_packages">搜索软件包</span>
+            </button>
+            <button id="installed-tab-btn" onclick="setActiveTab('installed')">
+                <span data-i18n="installed_packages">已安装软件包</span>
+            </button>
+            <button id="maintenance-tab-btn" onclick="setActiveTab('maintenance')">
+                <span data-i18n="maintenance">系统维护</span>
+            </button>
+        </nav>
+
+        <main class="app-main">
+            <!-- Search Tab -->
+            <div id="search-tab" class="tab-content">
+                <div class="search-bar">
+                    <input type="text" id="search-input" data-i18n-placeholder="search_placeholder" placeholder="输入软件包名称进行搜索...">
+                    <button id="search-btn" onclick="searchPackages()">
+                        <span data-i18n="search">搜索</span>
+                    </button>
+                </div>
+                
+                <div class="package-list" id="search-results">
+                    <!-- Search results will be populated here -->
+                </div>
+            </div>
+
+            <!-- Installed Tab -->
+            <div id="installed-tab" class="tab-content hidden">
+                <div class="tab-header">
+                    <h2 data-i18n="installed_packages">已安装软件包</h2>
+                    <button onclick="loadInstalledPackages()">
+                        <span data-i18n="refresh">刷新</span>
+                    </button>
+                </div>
+                
+                <div class="package-list" id="installed-packages">
+                    <!-- Installed packages will be populated here -->
+                </div>
+            </div>
+
+            <!-- Maintenance Tab -->
+            <div id="maintenance-tab" class="tab-content hidden">
+                <h2 data-i18n="maintenance">系统维护</h2>
+                <div class="maintenance-actions">
+                    <button onclick="updateHomebrew()">
+                        <span data-i18n="update_homebrew">更新 Homebrew</span>
+                    </button>
+                    <button onclick="upgradePackages()">
+                        <span data-i18n="upgrade_packages">升级所有软件包</span>
+                    </button>
+                    <button onclick="runDoctor()">
+                        <span data-i18n="run_doctor">运行诊断</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="mock-electron-api.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
