@@ -6,6 +6,8 @@ import PackageDetails from './components/PackageDetails';
 import TagManager from './components/TagManager';
 import PackageTagSelector from './components/PackageTagSelector';
 import BatchOperations from './components/BatchOperations';
+import ServiceManager from './components/ServiceManager';
+import CacheManager from './components/CacheManager';
 
 // Legacy interface for backward compatibility
 interface Package {
@@ -30,6 +32,8 @@ const App: React.FC = () => {
   const [selectedPackages, setSelectedPackages] = useState<Set<string>>(new Set());
   const [showBatchOperations, setShowBatchOperations] = useState(false);
   const [availableTags, setAvailableTags] = useState<PackageTag[]>([]);
+  const [showServiceManager, setShowServiceManager] = useState(false);
+  const [showCacheManager, setShowCacheManager] = useState(false);
 
   // Load installed packages on component mount
   useEffect(() => {
@@ -536,6 +540,12 @@ const App: React.FC = () => {
               <button onClick={() => setShowTagManager(true)} disabled={loading}>
                 {t('manage_tags')}
               </button>
+              <button onClick={() => setShowServiceManager(true)} disabled={loading}>
+                {t('service_manager')}
+              </button>
+              <button onClick={() => setShowCacheManager(true)} disabled={loading}>
+                {t('cache_manager')}
+              </button>
             </div>
           </div>
         )}
@@ -574,6 +584,18 @@ const App: React.FC = () => {
           onBatchTag={handleBatchTag}
           onClearSelection={clearSelection}
           onClose={() => setShowBatchOperations(false)}
+        />
+      )}
+
+      {showServiceManager && (
+        <ServiceManager
+          onClose={() => setShowServiceManager(false)}
+        />
+      )}
+
+      {showCacheManager && (
+        <CacheManager
+          onClose={() => setShowCacheManager(false)}
         />
       )}
     </div>
