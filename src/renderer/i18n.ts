@@ -71,6 +71,23 @@ const resources = {
       close: 'Close',
       delete: 'Delete',
       tags: 'Tags',
+
+      // Batch operations
+      batch_operations: 'Batch Operations',
+      selected_packages: '{{count}} packages selected',
+      total_selected: 'Total Selected',
+      installation_actions: 'Installation Actions',
+      tagging_actions: 'Tagging Actions',
+      install_selected: 'Install {{count}} packages',
+      uninstall_selected: 'Uninstall {{count}} packages',
+      installing: 'Installing...',
+      uninstalling: 'Uninstalling...',
+      tagging: 'Tagging...',
+      select_tag: 'Select a tag',
+      add_tag_to_selected: 'Add tag to selected',
+      selected_packages_list: 'Selected Packages',
+      clear_selection: 'Clear Selection',
+      confirm_batch_uninstall: 'Are you sure you want to uninstall {{count}} packages?',
     }
   },
   'zh-CN': {
@@ -141,6 +158,23 @@ const resources = {
       close: '关闭',
       delete: '删除',
       tags: '标签',
+
+      // Batch operations
+      batch_operations: '批量操作',
+      selected_packages: '已选择 {{count}} 个软件包',
+      total_selected: '总计选择',
+      installation_actions: '安装操作',
+      tagging_actions: '标签操作',
+      install_selected: '安装 {{count}} 个软件包',
+      uninstall_selected: '卸载 {{count}} 个软件包',
+      installing: '安装中...',
+      uninstalling: '卸载中...',
+      tagging: '标记中...',
+      select_tag: '选择标签',
+      add_tag_to_selected: '为选中项添加标签',
+      selected_packages_list: '选中的软件包',
+      clear_selection: '清除选择',
+      confirm_batch_uninstall: '确定要卸载 {{count}} 个软件包吗？',
     }
   },
   'zh-TW': {
@@ -211,6 +245,23 @@ const resources = {
       close: '關閉',
       delete: '刪除',
       tags: '標籤',
+
+      // Batch operations
+      batch_operations: '批量操作',
+      selected_packages: '已選擇 {{count}} 個軟體包',
+      total_selected: '總計選擇',
+      installation_actions: '安裝操作',
+      tagging_actions: '標籤操作',
+      install_selected: '安裝 {{count}} 個軟體包',
+      uninstall_selected: '卸載 {{count}} 個軟體包',
+      installing: '安裝中...',
+      uninstalling: '卸載中...',
+      tagging: '標記中...',
+      select_tag: '選擇標籤',
+      add_tag_to_selected: '為選中項添加標籤',
+      selected_packages_list: '選中的軟體包',
+      clear_selection: '清除選擇',
+      confirm_batch_uninstall: '確定要卸載 {{count}} 個軟體包嗎？',
     }
   }
 };

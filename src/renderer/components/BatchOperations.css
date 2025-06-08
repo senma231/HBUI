@@ -1,0 +1,321 @@
+/* Batch Operations Modal Styles */
+.batch-operations-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.batch-operations-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 700px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.batch-operations-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #f8f9fa;
+}
+
+.batch-operations-header h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.selected-count {
+  font-size: 14px;
+  color: #666;
+  background: #e9ecef;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.batch-operations-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.selected-packages-summary {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.summary-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.summary-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.batch-actions-section,
+.batch-tagging-section {
+  margin-bottom: 24px;
+}
+
+.batch-actions-section h4,
+.batch-tagging-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.batch-install-btn,
+.batch-uninstall-btn,
+.batch-tag-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.batch-install-btn {
+  background: #34C759;
+  color: white;
+}
+
+.batch-install-btn:hover:not(:disabled) {
+  background: #28A745;
+}
+
+.batch-uninstall-btn {
+  background: #FF3B30;
+  color: white;
+}
+
+.batch-uninstall-btn:hover:not(:disabled) {
+  background: #DC3545;
+}
+
+.batch-tag-btn {
+  background: #AF52DE;
+  color: white;
+}
+
+.batch-tag-btn:hover:not(:disabled) {
+  background: #9A3FCC;
+}
+
+.batch-install-btn:disabled,
+.batch-uninstall-btn:disabled,
+.batch-tag-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.tag-selection {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.tag-selector {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.tag-selector:focus {
+  border-color: #007AFF;
+}
+
+.selected-packages-list h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.packages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.selected-package-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.package-name {
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.package-status {
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.package-status.installed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.package-status.not-installed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.batch-operations-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e5e5;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+}
+
+.clear-selection-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.clear-selection-btn:hover {
+  background: #5a6268;
+}
+
+.close-modal-btn {
+  background: #007AFF;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.close-modal-btn:hover {
+  background: #0056CC;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .batch-operations-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .batch-operations-header {
+    padding: 16px 20px;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  
+  .batch-operations-content {
+    padding: 20px;
+  }
+  
+  .selected-packages-summary {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .tag-selection {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .packages-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .batch-operations-footer {
+    flex-direction: column;
+    gap: 12px;
+  }
+}

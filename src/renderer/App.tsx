@@ -5,6 +5,7 @@ import { PackageInfo, SearchOptions, BrewResponse, PackageTag } from '../types/g
 import PackageDetails from './components/PackageDetails';
 import TagManager from './components/TagManager';
 import PackageTagSelector from './components/PackageTagSelector';
+import BatchOperations from './components/BatchOperations';
 
 // Legacy interface for backward compatibility
 interface Package {
@@ -26,12 +27,16 @@ const App: React.FC = () => {
   const [showTagManager, setShowTagManager] = useState(false);
   const [showTagSelector, setShowTagSelector] = useState<string | null>(null);
   const [packageTags, setPackageTags] = useState<Map<string, PackageTag[]>>(new Map());
+  const [selectedPackages, setSelectedPackages] = useState<Set<string>>(new Set());
+  const [showBatchOperations, setShowBatchOperations] = useState(false);
+  const [availableTags, setAvailableTags] = useState<PackageTag[]>([]);
 
   // Load installed packages on component mount
   useEffect(() => {
     loadInstalledPackages();
     loadSearchHistory();
     loadPackageTags();
+    loadAvailableTags();
   }, []);
 
   const loadInstalledPackages = async () => {
@@ -82,6 +87,74 @@ const App: React.FC = () => {
 
   const refreshPackageTags = () => {
     loadPackageTags();
+  };
+
+  const loadAvailableTags = async () => {
+    try {
+      const result = await window.electronAPI.getAllTags();
+      if (result.success && result.data) {
+        setAvailableTags(result.data);
+      }
+    } catch (error) {
+      console.error('Error loading available tags:', error);
+    }
+  };
+
+  const togglePackageSelection = (packageName: string) => {
+    setSelectedPackages(prev => {
+      const newSelection = new Set(prev);
+      if (newSelection.has(packageName)) {
+        newSelection.delete(packageName);
+      } else {
+        newSelection.add(packageName);
+      }
+      return newSelection;
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedPackages(new Set());
+  };
+
+  const getSelectedPackageObjects = (): PackageInfo[] => {
+    const allPackages = [...packages, ...installedPackages];
+    return allPackages.filter(pkg => selectedPackages.has(pkg.name));
+  };
+
+  const handleBatchInstall = async (packageNames: string[]) => {
+    for (const packageName of packageNames) {
+      try {
+        await installPackage(packageName);
+      } catch (error) {
+        console.error(`Failed to install ${packageName}:`, error);
+      }
+    }
+    clearSelection();
+    setShowBatchOperations(false);
+  };
+
+  const handleBatchUninstall = async (packageNames: string[]) => {
+    for (const packageName of packageNames) {
+      try {
+        await uninstallPackage(packageName);
+      } catch (error) {
+        console.error(`Failed to uninstall ${packageName}:`, error);
+      }
+    }
+    clearSelection();
+    setShowBatchOperations(false);
+  };
+
+  const handleBatchTag = async (packageNames: string[], tag: PackageTag) => {
+    for (const packageName of packageNames) {
+      try {
+        await window.electronAPI.addPackageTag(packageName, tag);
+      } catch (error) {
+        console.error(`Failed to tag ${packageName}:`, error);
+      }
+    }
+    refreshPackageTags();
+    setShowBatchOperations(false);
   };
 
   const searchPackages = async () => {
@@ -301,9 +374,38 @@ const App: React.FC = () => {
               )}
             </div>
 
+            {selectedPackages.size > 0 && (
+              <div className="batch-selection-bar">
+                <span className="selection-count">
+                  {t('selected_packages', { count: selectedPackages.size })}
+                </span>
+                <div className="batch-actions">
+                  <button
+                    onClick={() => setShowBatchOperations(true)}
+                    className="batch-operations-btn"
+                  >
+                    {t('batch_operations')}
+                  </button>
+                  <button
+                    onClick={clearSelection}
+                    className="clear-selection-btn"
+                  >
+                    {t('clear_selection')}
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="package-list">
               {packages.map((pkg) => (
-                <div key={pkg.name} className="package-item enhanced">
+                <div key={pkg.name} className={`package-item enhanced ${selectedPackages.has(pkg.name) ? 'selected' : ''}`}>
+                  <div className="package-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedPackages.has(pkg.name)}
+                      onChange={() => togglePackageSelection(pkg.name)}
+                    />
+                  </div>
                   <div className="package-info">
                     <div className="package-header">
                       <span className="package-name" onClick={() => setSelectedPackage(pkg.name)}>
@@ -366,7 +468,14 @@ const App: React.FC = () => {
 
             <div className="package-list">
               {installedPackages.map((pkg) => (
-                <div key={pkg.name} className="package-item enhanced">
+                <div key={pkg.name} className={`package-item enhanced ${selectedPackages.has(pkg.name) ? 'selected' : ''}`}>
+                  <div className="package-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedPackages.has(pkg.name)}
+                      onChange={() => togglePackageSelection(pkg.name)}
+                    />
+                  </div>
                   <div className="package-info">
                     <div className="package-header">
                       <span className="package-name" onClick={() => setSelectedPackage(pkg.name)}>
@@ -453,6 +562,18 @@ const App: React.FC = () => {
           packageName={showTagSelector}
           onClose={() => setShowTagSelector(null)}
           onTagsUpdated={refreshPackageTags}
+        />
+      )}
+
+      {showBatchOperations && (
+        <BatchOperations
+          selectedPackages={getSelectedPackageObjects()}
+          availableTags={availableTags}
+          onBatchInstall={handleBatchInstall}
+          onBatchUninstall={handleBatchUninstall}
+          onBatchTag={handleBatchTag}
+          onClearSelection={clearSelection}
+          onClose={() => setShowBatchOperations(false)}
         />
       )}
     </div>
