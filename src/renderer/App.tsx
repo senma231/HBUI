@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import './App.css';
+import { PackageInfo, SearchOptions, BrewResponse } from '../types/global';
+import PackageDetails from './components/PackageDetails';
 
+// Legacy interface for backward compatibility
 interface Package {
   name: string;
   installed: boolean;
@@ -10,15 +13,19 @@ interface Package {
 
 const App: React.FC = () => {
   const { t, i18n } = useTranslation();
-  const [packages, setPackages] = useState<Package[]>([]);
-  const [installedPackages, setInstalledPackages] = useState<string[]>([]);
+  const [packages, setPackages] = useState<PackageInfo[]>([]);
+  const [installedPackages, setInstalledPackages] = useState<PackageInfo[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'search' | 'installed' | 'maintenance'>('search');
+  const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const [searchType, setSearchType] = useState<'all' | 'formula' | 'cask'>('all');
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
 
   // Load installed packages on component mount
   useEffect(() => {
     loadInstalledPackages();
+    loadSearchHistory();
   }, []);
 
   const loadInstalledPackages = async () => {
@@ -26,7 +33,7 @@ const App: React.FC = () => {
     try {
       const result = await window.electronAPI.brewList();
       if (result.success && result.data) {
-        setInstalledPackages(result.data.filter(pkg => pkg.trim() !== ''));
+        setInstalledPackages(result.data);
       }
     } catch (error) {
       console.error('Failed to load installed packages:', error);
@@ -35,20 +42,38 @@ const App: React.FC = () => {
     }
   };
 
+  const loadSearchHistory = () => {
+    const history = localStorage.getItem('searchHistory');
+    if (history) {
+      setSearchHistory(JSON.parse(history));
+    }
+  };
+
+  const saveSearchHistory = (query: string) => {
+    const newHistory = [query, ...searchHistory.filter(h => h !== query)].slice(0, 10);
+    setSearchHistory(newHistory);
+    localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+  };
+
   const searchPackages = async () => {
     if (!searchQuery.trim()) return;
-    
+
     setLoading(true);
     try {
-      const result = await window.electronAPI.brewSearch(searchQuery);
+      const searchOptions: SearchOptions = {
+        type: searchType === 'all' ? undefined : searchType,
+        includeDescriptions: true
+      };
+
+      const result = await window.electronAPI.searchPackages(searchQuery, searchOptions);
       if (result.success && result.data) {
-        const packageList = result.data
-          .filter(pkg => pkg.trim() !== '')
-          .map(name => ({
-            name,
-            installed: installedPackages.includes(name)
-          }));
+        // Mark packages as installed if they exist in installedPackages
+        const packageList = result.data.map(pkg => ({
+          ...pkg,
+          installed: installedPackages.some(installed => installed.name === pkg.name)
+        }));
         setPackages(packageList);
+        saveSearchHistory(searchQuery);
       }
     } catch (error) {
       console.error('Failed to search packages:', error);
@@ -64,9 +89,13 @@ const App: React.FC = () => {
       if (result.success) {
         await loadInstalledPackages();
         // Update the package list to reflect installation
-        setPackages(prev => prev.map(pkg => 
+        setPackages(prev => prev.map(pkg =>
           pkg.name === packageName ? { ...pkg, installed: true } : pkg
         ));
+        // Close package details if open
+        if (selectedPackage === packageName) {
+          setSelectedPackage(null);
+        }
       } else {
         alert(`${t('install_failed')}: ${result.error}`);
       }
@@ -85,9 +114,13 @@ const App: React.FC = () => {
       if (result.success) {
         await loadInstalledPackages();
         // Update the package list to reflect uninstallation
-        setPackages(prev => prev.map(pkg => 
+        setPackages(prev => prev.map(pkg =>
           pkg.name === packageName ? { ...pkg, installed: false } : pkg
         ));
+        // Close package details if open
+        if (selectedPackage === packageName) {
+          setSelectedPackage(null);
+        }
       } else {
         alert(`${t('uninstall_failed')}: ${result.error}`);
       }
@@ -190,26 +223,81 @@ const App: React.FC = () => {
       <main className="app-main">
         {activeTab === 'search' && (
           <div className="search-tab">
-            <div className="search-bar">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('search_placeholder')}
-                onKeyPress={(e) => e.key === 'Enter' && searchPackages()}
-              />
-              <button onClick={searchPackages} disabled={loading}>
-                {loading ? t('searching') : t('search')}
-              </button>
+            <div className="search-controls">
+              <div className="search-bar">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('search_placeholder')}
+                  onKeyPress={(e) => e.key === 'Enter' && searchPackages()}
+                />
+                <button onClick={searchPackages} disabled={loading}>
+                  {loading ? t('searching') : t('search')}
+                </button>
+              </div>
+
+              <div className="search-filters">
+                <div className="search-type-selector">
+                  <label>{t('search_type')}:</label>
+                  <select
+                    value={searchType}
+                    onChange={(e) => setSearchType(e.target.value as 'all' | 'formula' | 'cask')}
+                  >
+                    <option value="all">{t('search_type_all')}</option>
+                    <option value="formula">{t('search_type_formula')}</option>
+                    <option value="cask">{t('search_type_cask')}</option>
+                  </select>
+                </div>
+              </div>
+
+              {searchHistory.length > 0 && (
+                <div className="search-history">
+                  <label>{t('recent_searches')}:</label>
+                  <div className="history-items">
+                    {searchHistory.slice(0, 5).map((query, index) => (
+                      <button
+                        key={index}
+                        className="history-item"
+                        onClick={() => {
+                          setSearchQuery(query);
+                          searchPackages();
+                        }}
+                      >
+                        {query}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-            
+
             <div className="package-list">
               {packages.map((pkg) => (
-                <div key={pkg.name} className="package-item">
-                  <span className="package-name">{pkg.name}</span>
+                <div key={pkg.name} className="package-item enhanced">
+                  <div className="package-info">
+                    <div className="package-header">
+                      <span className="package-name" onClick={() => setSelectedPackage(pkg.name)}>
+                        {pkg.name}
+                      </span>
+                      <span className={`package-type ${pkg.type}`}>
+                        {pkg.type}
+                      </span>
+                      {pkg.installed && <span className="installed-badge">{t('installed')}</span>}
+                    </div>
+                    {pkg.description && (
+                      <p className="package-description">{pkg.description}</p>
+                    )}
+                  </div>
                   <div className="package-actions">
+                    <button
+                      onClick={() => setSelectedPackage(pkg.name)}
+                      className="details-btn"
+                    >
+                      {t('details')}
+                    </button>
                     {pkg.installed ? (
-                      <button 
+                      <button
                         onClick={() => uninstallPackage(pkg.name)}
                         disabled={loading}
                         className="uninstall-btn"
@@ -217,7 +305,7 @@ const App: React.FC = () => {
                         {t('uninstall')}
                       </button>
                     ) : (
-                      <button 
+                      <button
                         onClick={() => installPackage(pkg.name)}
                         disabled={loading}
                         className="install-btn"
@@ -235,19 +323,41 @@ const App: React.FC = () => {
         {activeTab === 'installed' && (
           <div className="installed-tab">
             <div className="tab-header">
-              <h2>{t('installed_packages')}</h2>
+              <h2>{t('installed_packages')} ({installedPackages.length})</h2>
               <button onClick={loadInstalledPackages} disabled={loading}>
                 {t('refresh')}
               </button>
             </div>
-            
+
             <div className="package-list">
               {installedPackages.map((pkg) => (
-                <div key={pkg} className="package-item">
-                  <span className="package-name">{pkg}</span>
+                <div key={pkg.name} className="package-item enhanced">
+                  <div className="package-info">
+                    <div className="package-header">
+                      <span className="package-name" onClick={() => setSelectedPackage(pkg.name)}>
+                        {pkg.name}
+                      </span>
+                      <span className={`package-type ${pkg.type}`}>
+                        {pkg.type}
+                      </span>
+                      <span className="installed-badge">{t('installed')}</span>
+                      {pkg.version && (
+                        <span className="version-badge">v{pkg.version}</span>
+                      )}
+                    </div>
+                    {pkg.description && (
+                      <p className="package-description">{pkg.description}</p>
+                    )}
+                  </div>
                   <div className="package-actions">
-                    <button 
-                      onClick={() => uninstallPackage(pkg)}
+                    <button
+                      onClick={() => setSelectedPackage(pkg.name)}
+                      className="details-btn"
+                    >
+                      {t('details')}
+                    </button>
+                    <button
+                      onClick={() => uninstallPackage(pkg.name)}
                       disabled={loading}
                       className="uninstall-btn"
                     >
@@ -277,6 +387,15 @@ const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {selectedPackage && (
+        <PackageDetails
+          packageName={selectedPackage}
+          onClose={() => setSelectedPackage(null)}
+          onInstall={installPackage}
+          onUninstall={uninstallPackage}
+        />
+      )}
     </div>
   );
 };

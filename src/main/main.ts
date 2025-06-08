@@ -2,8 +2,86 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { exec } = require('child_process');
 const { promisify } = require('util');
+const fs = require('fs');
+const os = require('os');
 
 const execAsync = promisify(exec);
+
+// Helper functions for package information parsing
+const parsePackageInfo = (infoOutput, packageName) => {
+  const lines = infoOutput.split('\n');
+  const packageInfo = {
+    name: packageName,
+    version: '',
+    description: '',
+    homepage: '',
+    dependencies: [],
+    type: 'formula',
+    installed: false,
+    outdated: false,
+    pinned: false
+  };
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+
+    if (trimmedLine.includes('==> Cask ')) {
+      packageInfo.type = 'cask';
+    } else if (trimmedLine.includes('==> Formula ')) {
+      packageInfo.type = 'formula';
+    }
+
+    if (trimmedLine.startsWith('Description:')) {
+      packageInfo.description = trimmedLine.replace('Description:', '').trim();
+    } else if (trimmedLine.startsWith('Homepage:')) {
+      packageInfo.homepage = trimmedLine.replace('Homepage:', '').trim();
+    } else if (trimmedLine.includes('Installed')) {
+      packageInfo.installed = true;
+      // Extract version from installed line
+      const versionMatch = trimmedLine.match(/(\d+\.\d+[\.\d]*)/);
+      if (versionMatch) {
+        packageInfo.version = versionMatch[1];
+      }
+    } else if (trimmedLine.includes('Dependencies:')) {
+      const depsLine = trimmedLine.replace('Dependencies:', '').trim();
+      if (depsLine && depsLine !== 'None') {
+        packageInfo.dependencies = depsLine.split(',').map(dep => dep.trim());
+      }
+    }
+  }
+
+  return packageInfo;
+};
+
+const parsePackageList = async (listOutput, type = 'formula') => {
+  const packages = listOutput.trim().split('\n').filter(pkg => pkg.trim() !== '');
+  const packageInfos = [];
+
+  for (const pkg of packages) {
+    try {
+      const { stdout: infoOutput } = await execAsync(`brew info ${pkg}`);
+      const packageInfo = parsePackageInfo(infoOutput, pkg);
+      packageInfo.type = type;
+      packageInfo.installed = true;
+      packageInfos.push(packageInfo);
+    } catch (error) {
+      // If brew info fails, create basic package info
+      packageInfos.push({
+        name: pkg,
+        type: type,
+        installed: true,
+        description: '',
+        homepage: '',
+        dependencies: [],
+        version: '',
+        outdated: false,
+        pinned: false
+      });
+    }
+  }
+
+  return packageInfos;
+};
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -60,10 +138,60 @@ app.on('activate', () => {
 });
 
 // IPC handlers for Homebrew operations
-ipcMain.handle('brew-search', async (event, query) => {
+ipcMain.handle('brew-search', async (event, query, options: any = {}) => {
   try {
-    const { stdout } = await execAsync(`brew search ${query}`);
-    return { success: true, data: stdout.trim().split('\n') };
+    let searchCommand = 'brew search';
+
+    if (options.type === 'formula') {
+      searchCommand += ' --formulae';
+    } else if (options.type === 'cask') {
+      searchCommand += ' --casks';
+    }
+
+    searchCommand += ` ${query}`;
+
+    const { stdout } = await execAsync(searchCommand);
+    const packageNames = stdout.trim().split('\n').filter(name => name.trim() !== '');
+
+    // Get detailed info for each package if requested
+    if (options.includeDescriptions && packageNames.length > 0) {
+      const packageInfos = [];
+      for (const name of packageNames.slice(0, 20)) { // Limit to first 20 for performance
+        try {
+          const { stdout: infoOutput } = await execAsync(`brew info ${name}`);
+          const packageInfo = parsePackageInfo(infoOutput, name);
+          packageInfos.push(packageInfo);
+        } catch (error) {
+          packageInfos.push({
+            name: name,
+            type: options.type || 'formula',
+            installed: false,
+            description: '',
+            homepage: '',
+            dependencies: [],
+            version: '',
+            outdated: false,
+            pinned: false
+          });
+        }
+      }
+      return { success: true, data: packageInfos };
+    }
+
+    // Return simple package list
+    const simplePackages = packageNames.map(name => ({
+      name: name,
+      type: options.type || 'formula',
+      installed: false,
+      description: '',
+      homepage: '',
+      dependencies: [],
+      version: '',
+      outdated: false,
+      pinned: false
+    }));
+
+    return { success: true, data: simplePackages };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -72,7 +200,8 @@ ipcMain.handle('brew-search', async (event, query) => {
 ipcMain.handle('brew-list', async () => {
   try {
     const { stdout } = await execAsync('brew list');
-    return { success: true, data: stdout.trim().split('\n') };
+    const packageInfos = await parsePackageList(stdout, 'formula');
+    return { success: true, data: packageInfos };
   } catch (error) {
     return { success: false, error: error.message };
   }
@@ -81,7 +210,104 @@ ipcMain.handle('brew-list', async () => {
 ipcMain.handle('brew-info', async (event, packageName) => {
   try {
     const { stdout } = await execAsync(`brew info ${packageName}`);
-    return { success: true, data: stdout };
+    const packageInfo = parsePackageInfo(stdout, packageName);
+    return { success: true, data: packageInfo };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Enhanced package information handler
+ipcMain.handle('get-package-details', async (event, packageName) => {
+  try {
+    const { stdout } = await execAsync(`brew info ${packageName}`);
+    const packageInfo = parsePackageInfo(stdout, packageName);
+
+    // Get additional information
+    try {
+      const { stdout: depsOutput } = await execAsync(`brew deps ${packageName}`);
+      packageInfo.dependencies = depsOutput.trim().split('\n').filter(dep => dep.trim() !== '');
+    } catch (error) {
+      // Dependencies command failed, keep empty array
+    }
+
+    return { success: true, data: packageInfo };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Get package dependencies
+ipcMain.handle('brew-deps', async (event, packageName) => {
+  try {
+    const { stdout } = await execAsync(`brew deps ${packageName}`);
+    const dependencies = stdout.trim().split('\n').filter(dep => dep.trim() !== '');
+    return { success: true, data: dependencies };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Get packages that depend on this package
+ipcMain.handle('brew-uses', async (event, packageName) => {
+  try {
+    const { stdout } = await execAsync(`brew uses ${packageName} --installed`);
+    const dependents = stdout.trim().split('\n').filter(dep => dep.trim() !== '');
+    return { success: true, data: dependents };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Get outdated packages
+ipcMain.handle('brew-outdated', async () => {
+  try {
+    const { stdout } = await execAsync('brew outdated');
+    const outdatedPackages = stdout.trim().split('\n').filter(pkg => pkg.trim() !== '');
+    const packageInfos = [];
+
+    for (const pkg of outdatedPackages) {
+      try {
+        const { stdout: infoOutput } = await execAsync(`brew info ${pkg}`);
+        const packageInfo = parsePackageInfo(infoOutput, pkg);
+        packageInfo.outdated = true;
+        packageInfos.push(packageInfo);
+      } catch (error) {
+        packageInfos.push({
+          name: pkg,
+          type: 'formula',
+          installed: true,
+          outdated: true,
+          description: '',
+          homepage: '',
+          dependencies: [],
+          version: '',
+          pinned: false
+        });
+      }
+    }
+
+    return { success: true, data: packageInfos };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Get Homebrew services
+ipcMain.handle('brew-services', async () => {
+  try {
+    const { stdout } = await execAsync('brew services list');
+    const lines = stdout.trim().split('\n').slice(1); // Skip header
+    const services = lines.map(line => {
+      const parts = line.split(/\s+/);
+      return {
+        name: parts[0],
+        status: parts[1],
+        user: parts[2] || '',
+        plist: parts[3] || ''
+      };
+    });
+    return { success: true, data: services };
   } catch (error) {
     return { success: false, error: error.message };
   }

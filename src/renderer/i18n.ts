@@ -26,6 +26,32 @@ const resources = {
       upgrade_failed: 'Upgrade failed',
       doctor_result: 'Doctor Result',
       doctor_failed: 'Doctor check failed',
+
+      // Package details
+      loading: 'Loading',
+      loading_package_details: 'Loading package details...',
+      error: 'Error',
+      retry: 'Retry',
+      version: 'Version',
+      status: 'Status',
+      installed: 'Installed',
+      not_installed: 'Not Installed',
+      outdated: 'Outdated',
+      description: 'Description',
+      homepage: 'Homepage',
+      dependencies: 'Dependencies',
+      used_by: 'Used by',
+
+      // Search options
+      search_type_all: 'All',
+      search_type_formula: 'Formulae',
+      search_type_cask: 'Casks',
+      sort_by_name: 'Name',
+      sort_by_relevance: 'Relevance',
+      sort_by_downloads: 'Downloads',
+      search_type: 'Type',
+      recent_searches: 'Recent searches',
+      details: 'Details',
     }
   },
   'zh-CN': {
@@ -51,6 +77,32 @@ const resources = {
       upgrade_failed: '升级失败',
       doctor_result: '诊断结果',
       doctor_failed: '诊断检查失败',
+
+      // Package details
+      loading: '加载中',
+      loading_package_details: '正在加载软件包详情...',
+      error: '错误',
+      retry: '重试',
+      version: '版本',
+      status: '状态',
+      installed: '已安装',
+      not_installed: '未安装',
+      outdated: '有更新',
+      description: '描述',
+      homepage: '主页',
+      dependencies: '依赖项',
+      used_by: '被使用于',
+
+      // Search options
+      search_type_all: '全部',
+      search_type_formula: '公式',
+      search_type_cask: '应用',
+      sort_by_name: '名称',
+      sort_by_relevance: '相关性',
+      sort_by_downloads: '下载量',
+      search_type: '类型',
+      recent_searches: '最近搜索',
+      details: '详情',
     }
   },
   'zh-TW': {
@@ -76,6 +128,32 @@ const resources = {
       upgrade_failed: '升級失敗',
       doctor_result: '診斷結果',
       doctor_failed: '診斷檢查失敗',
+
+      // Package details
+      loading: '載入中',
+      loading_package_details: '正在載入軟體包詳情...',
+      error: '錯誤',
+      retry: '重試',
+      version: '版本',
+      status: '狀態',
+      installed: '已安裝',
+      not_installed: '未安裝',
+      outdated: '有更新',
+      description: '描述',
+      homepage: '主頁',
+      dependencies: '依賴項',
+      used_by: '被使用於',
+
+      // Search options
+      search_type_all: '全部',
+      search_type_formula: '公式',
+      search_type_cask: '應用',
+      sort_by_name: '名稱',
+      sort_by_relevance: '相關性',
+      sort_by_downloads: '下載量',
+      search_type: '類型',
+      recent_searches: '最近搜尋',
+      details: '詳情',
     }
   }
 };

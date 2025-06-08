@@ -1,0 +1,276 @@
+/* Package Details Modal Styles */
+.package-details-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.package-details-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.package-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #f8f9fa;
+}
+
+.package-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.package-title h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.package-type {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.package-type.formula {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.package-type.cask {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.package-details-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.package-info-section {
+  margin-bottom: 24px;
+}
+
+.package-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.meta-item strong {
+  color: #333;
+}
+
+.status {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status.installed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.not-installed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status.outdated {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.description-section,
+.homepage-section,
+.dependencies-section,
+.dependents-section {
+  margin-bottom: 20px;
+}
+
+.description-section h3,
+.homepage-section h3,
+.dependencies-section h3,
+.dependents-section h3 {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.description-section p {
+  margin: 0;
+  line-height: 1.5;
+  color: #666;
+}
+
+.homepage-section a {
+  color: #007bff;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.homepage-section a:hover {
+  text-decoration: underline;
+}
+
+.dependency-list,
+.dependent-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dependency-item,
+.dependent-item {
+  background: #e9ecef;
+  color: #495057;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.package-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.action-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.install-button {
+  background: #28a745;
+  color: white;
+}
+
+.install-button:hover {
+  background: #218838;
+}
+
+.uninstall-button {
+  background: #dc3545;
+  color: white;
+}
+
+.uninstall-button:hover {
+  background: #c82333;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  color: #666;
+}
+
+.error-message {
+  color: #dc3545;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.retry-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+}
+
+.retry-button:hover {
+  background: #0056b3;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .package-details-modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .package-details-header {
+    padding: 16px 20px;
+  }
+  
+  .package-title h2 {
+    font-size: 20px;
+  }
+  
+  .package-details-content {
+    padding: 20px;
+  }
+  
+  .package-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
