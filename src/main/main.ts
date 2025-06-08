@@ -7,6 +7,39 @@ const os = require('os');
 
 const execAsync = promisify(exec);
 
+// Tag storage management
+const getTagsFilePath = () => {
+  const userDataPath = app.getPath('userData');
+  return path.join(userDataPath, 'package-tags.json');
+};
+
+const loadTagsFromFile = () => {
+  try {
+    const tagsFilePath = getTagsFilePath();
+    if (fs.existsSync(tagsFilePath)) {
+      const data = fs.readFileSync(tagsFilePath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error('Error loading tags:', error);
+  }
+  return { tags: [], packageTags: {} };
+};
+
+const saveTagsToFile = (data) => {
+  try {
+    const tagsFilePath = getTagsFilePath();
+    fs.writeFileSync(tagsFilePath, JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error('Error saving tags:', error);
+    throw error;
+  }
+};
+
+const generateTagId = () => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
 // Helper functions for package information parsing
 const parsePackageInfo = (infoOutput, packageName) => {
   const lines = infoOutput.split('\n');
@@ -354,6 +387,103 @@ ipcMain.handle('brew-doctor', async () => {
   try {
     const { stdout } = await execAsync('brew doctor');
     return { success: true, data: stdout };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Tag management IPC handlers
+ipcMain.handle('get-all-tags', async () => {
+  try {
+    const data = loadTagsFromFile();
+    return { success: true, data: data.tags };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('create-tag', async (event, tagData) => {
+  try {
+    const data = loadTagsFromFile();
+    const newTag = {
+      id: generateTagId(),
+      name: tagData.name,
+      color: tagData.color,
+      description: tagData.description
+    };
+
+    data.tags.push(newTag);
+    saveTagsToFile(data);
+
+    return { success: true, data: newTag };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('delete-tag', async (event, tagId) => {
+  try {
+    const data = loadTagsFromFile();
+    data.tags = data.tags.filter(tag => tag.id !== tagId);
+
+    // Remove tag from all packages
+    for (const packageName in data.packageTags) {
+      data.packageTags[packageName] = data.packageTags[packageName].filter(id => id !== tagId);
+      if (data.packageTags[packageName].length === 0) {
+        delete data.packageTags[packageName];
+      }
+    }
+
+    saveTagsToFile(data);
+    return { success: true, data: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('get-package-tags', async (event, packageName) => {
+  try {
+    const data = loadTagsFromFile();
+    const packageTagIds = data.packageTags[packageName] || [];
+    const packageTags = data.tags.filter(tag => packageTagIds.includes(tag.id));
+    return { success: true, data: packageTags };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('add-package-tag', async (event, packageName, tag) => {
+  try {
+    const data = loadTagsFromFile();
+
+    if (!data.packageTags[packageName]) {
+      data.packageTags[packageName] = [];
+    }
+
+    if (!data.packageTags[packageName].includes(tag.id)) {
+      data.packageTags[packageName].push(tag.id);
+      saveTagsToFile(data);
+    }
+
+    return { success: true, data: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('remove-package-tag', async (event, packageName, tagId) => {
+  try {
+    const data = loadTagsFromFile();
+
+    if (data.packageTags[packageName]) {
+      data.packageTags[packageName] = data.packageTags[packageName].filter(id => id !== tagId);
+      if (data.packageTags[packageName].length === 0) {
+        delete data.packageTags[packageName];
+      }
+      saveTagsToFile(data);
+    }
+
+    return { success: true, data: true };
   } catch (error) {
     return { success: false, error: error.message };
   }

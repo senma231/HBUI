@@ -52,6 +52,25 @@ const resources = {
       search_type: 'Type',
       recent_searches: 'Recent searches',
       details: 'Details',
+
+      // Tag management
+      manage_tags: 'Manage Tags',
+      create_new_tag: 'Create New Tag',
+      tag_name: 'Tag Name',
+      tag_description_optional: 'Description (optional)',
+      create_tag: 'Create Tag',
+      creating: 'Creating...',
+      existing_tags: 'Existing Tags',
+      no_tags_created: 'No tags created yet',
+      confirm_delete_tag: 'Are you sure you want to delete this tag?',
+      manage_package_tags: 'Manage Package Tags',
+      no_tags_available: 'No tags available',
+      create_tags_first: 'Create some tags first using the tag manager',
+      current_tags: 'Current Tags',
+      done: 'Done',
+      close: 'Close',
+      delete: 'Delete',
+      tags: 'Tags',
     }
   },
   'zh-CN': {
@@ -103,6 +122,25 @@ const resources = {
       search_type: '类型',
       recent_searches: '最近搜索',
       details: '详情',
+
+      // Tag management
+      manage_tags: '管理标签',
+      create_new_tag: '创建新标签',
+      tag_name: '标签名称',
+      tag_description_optional: '描述（可选）',
+      create_tag: '创建标签',
+      creating: '创建中...',
+      existing_tags: '现有标签',
+      no_tags_created: '尚未创建任何标签',
+      confirm_delete_tag: '确定要删除这个标签吗？',
+      manage_package_tags: '管理软件包标签',
+      no_tags_available: '没有可用的标签',
+      create_tags_first: '请先使用标签管理器创建一些标签',
+      current_tags: '当前标签',
+      done: '完成',
+      close: '关闭',
+      delete: '删除',
+      tags: '标签',
     }
   },
   'zh-TW': {
@@ -154,6 +192,25 @@ const resources = {
       search_type: '類型',
       recent_searches: '最近搜尋',
       details: '詳情',
+
+      // Tag management
+      manage_tags: '管理標籤',
+      create_new_tag: '創建新標籤',
+      tag_name: '標籤名稱',
+      tag_description_optional: '描述（可選）',
+      create_tag: '創建標籤',
+      creating: '創建中...',
+      existing_tags: '現有標籤',
+      no_tags_created: '尚未創建任何標籤',
+      confirm_delete_tag: '確定要刪除這個標籤嗎？',
+      manage_package_tags: '管理軟體包標籤',
+      no_tags_available: '沒有可用的標籤',
+      create_tags_first: '請先使用標籤管理器創建一些標籤',
+      current_tags: '當前標籤',
+      done: '完成',
+      close: '關閉',
+      delete: '刪除',
+      tags: '標籤',
     }
   }
 };

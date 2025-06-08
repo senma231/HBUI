@@ -1,0 +1,258 @@
+/* Package Tag Selector Modal Styles */
+.tag-selector-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+  backdrop-filter: blur(4px);
+}
+
+.tag-selector-modal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  max-width: 500px;
+  width: 90%;
+  max-height: 70vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tag-selector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e5e5;
+  background: #f8f9fa;
+}
+
+.header-info h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.package-name {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.tag-selector-content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.error-message {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dismiss-error {
+  background: none;
+  border: none;
+  color: #721c24;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.no-tags-available {
+  text-align: center;
+  padding: 40px 20px;
+  color: #666;
+}
+
+.no-tags-available p {
+  margin: 0 0 8px 0;
+}
+
+.suggestion {
+  font-size: 14px;
+  font-style: italic;
+}
+
+.tags-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.tag-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.tag-option:hover {
+  border-color: #007AFF;
+  background: #f8f9ff;
+}
+
+.tag-option.selected {
+  border-color: #007AFF;
+  background: #e3f2fd;
+}
+
+.tag-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tag-name {
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+}
+
+.tag-description {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+  flex: 2;
+}
+
+.tag-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #007AFF;
+  transition: all 0.2s ease;
+}
+
+.tag-option.selected .tag-checkbox {
+  border-color: #007AFF;
+  background: #007AFF;
+  color: white;
+}
+
+.current-tags-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.current-tags-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.current-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.current-tag {
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.tag-selector-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e5e5;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.done-button {
+  background: #007AFF;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.done-button:hover {
+  background: #0056CC;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .tag-selector-modal {
+    width: 95%;
+    max-height: 80vh;
+  }
+  
+  .tag-selector-header {
+    padding: 16px 20px;
+  }
+  
+  .tag-selector-content {
+    padding: 20px;
+  }
+  
+  .tag-option {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .tag-option .tag-checkbox {
+    align-self: flex-end;
+    margin-top: -20px;
+  }
+}

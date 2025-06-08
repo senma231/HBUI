@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import './App.css';
-import { PackageInfo, SearchOptions, BrewResponse } from '../types/global';
+import { PackageInfo, SearchOptions, BrewResponse, PackageTag } from '../types/global';
 import PackageDetails from './components/PackageDetails';
+import TagManager from './components/TagManager';
+import PackageTagSelector from './components/PackageTagSelector';
 
 // Legacy interface for backward compatibility
 interface Package {
@@ -21,11 +23,15 @@ const App: React.FC = () => {
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
   const [searchType, setSearchType] = useState<'all' | 'formula' | 'cask'>('all');
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [showTagManager, setShowTagManager] = useState(false);
+  const [showTagSelector, setShowTagSelector] = useState<string | null>(null);
+  const [packageTags, setPackageTags] = useState<Map<string, PackageTag[]>>(new Map());
 
   // Load installed packages on component mount
   useEffect(() => {
     loadInstalledPackages();
     loadSearchHistory();
+    loadPackageTags();
   }, []);
 
   const loadInstalledPackages = async () => {
@@ -53,6 +59,29 @@ const App: React.FC = () => {
     const newHistory = [query, ...searchHistory.filter(h => h !== query)].slice(0, 10);
     setSearchHistory(newHistory);
     localStorage.setItem('searchHistory', JSON.stringify(newHistory));
+  };
+
+  const loadPackageTags = async () => {
+    try {
+      // Load tags for all packages (we'll optimize this later)
+      const allPackages = [...packages, ...installedPackages];
+      const tagsMap = new Map<string, PackageTag[]>();
+
+      for (const pkg of allPackages) {
+        const result = await window.electronAPI.getPackageTags(pkg.name);
+        if (result.success && result.data) {
+          tagsMap.set(pkg.name, result.data);
+        }
+      }
+
+      setPackageTags(tagsMap);
+    } catch (error) {
+      console.error('Error loading package tags:', error);
+    }
+  };
+
+  const refreshPackageTags = () => {
+    loadPackageTags();
   };
 
   const searchPackages = async () => {
@@ -296,6 +325,12 @@ const App: React.FC = () => {
                     >
                       {t('details')}
                     </button>
+                    <button
+                      onClick={() => setShowTagSelector(pkg.name)}
+                      className="tags-btn"
+                    >
+                      {t('tags')}
+                    </button>
                     {pkg.installed ? (
                       <button
                         onClick={() => uninstallPackage(pkg.name)}
@@ -357,6 +392,12 @@ const App: React.FC = () => {
                       {t('details')}
                     </button>
                     <button
+                      onClick={() => setShowTagSelector(pkg.name)}
+                      className="tags-btn"
+                    >
+                      {t('tags')}
+                    </button>
+                    <button
                       onClick={() => uninstallPackage(pkg.name)}
                       disabled={loading}
                       className="uninstall-btn"
@@ -383,6 +424,9 @@ const App: React.FC = () => {
               <button onClick={runDoctor} disabled={loading}>
                 {t('run_doctor')}
               </button>
+              <button onClick={() => setShowTagManager(true)} disabled={loading}>
+                {t('manage_tags')}
+              </button>
             </div>
           </div>
         )}
@@ -394,6 +438,21 @@ const App: React.FC = () => {
           onClose={() => setSelectedPackage(null)}
           onInstall={installPackage}
           onUninstall={uninstallPackage}
+        />
+      )}
+
+      {showTagManager && (
+        <TagManager
+          onClose={() => setShowTagManager(false)}
+          onTagsUpdated={refreshPackageTags}
+        />
+      )}
+
+      {showTagSelector && (
+        <PackageTagSelector
+          packageName={showTagSelector}
+          onClose={() => setShowTagSelector(null)}
+          onTagsUpdated={refreshPackageTags}
         />
       )}
     </div>
