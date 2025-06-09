@@ -3,7 +3,7 @@
   "productName": "Homebrew UI",
   "version": "1.0.0",
   "description": "A modern GUI for Homebrew package manager",
-  "main": "main.js",
+  "main": "dist/main.js",
   "scripts": {
     "start": "npx electron .",
     "dev": "concurrently \"npm run dev:renderer\" \"npm run dev:electron\"",
@@ -13,11 +13,14 @@
     "build:main": "webpack --config webpack.main.config.js",
     "build:preload": "webpack --config webpack.preload.config.js",
     "build:renderer": "webpack --config webpack.renderer.config.js",
-    "package": "npm run build && electron-builder",
+    "package": "node build-and-package.js",
+    "package:electron-builder": "npm run build && electron-builder",
     "package:mac": "npm run build && electron-builder --mac --universal",
     "package:linux:x64": "npm run build && electron-builder --linux --x64",
     "package:linux:arm64": "npm run build && electron-builder --linux --arm64",
     "package:all": "npm run build && electron-builder --mac --linux --universal",
+    "make": "node build-and-make.js",
+    "publish": "npm run build && npx electron-forge publish",
     "test": "echo \"Running basic tests...\" && node test-homebrew.js",
     "lint": "eslint --ext .ts,.tsx src/"
   },
@@ -52,6 +55,15 @@
     "webpack-dev-server": "^5.2.2"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^7.8.1",
+    "@electron-forge/maker-deb": "^7.8.1",
+    "@electron-forge/maker-rpm": "^7.8.1",
+    "@electron-forge/maker-squirrel": "^7.8.1",
+    "@electron-forge/maker-zip": "^7.8.1",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
+    "@electron-forge/plugin-fuses": "^7.8.1",
+    "@electron-forge/plugin-webpack": "^7.8.1",
+    "@electron/fuses": "^1.8.0",
     "@types/node": "^22.15.29",
     "electron": "^32.2.7",
     "electron-builder": "^25.1.8"

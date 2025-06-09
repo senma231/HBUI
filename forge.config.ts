@@ -5,18 +5,64 @@ import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
 import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 import { WebpackPlugin } from '@electron-forge/plugin-webpack';
-import { FusesPlugin } from '@electron-forge/plugin-fuses';
-import { FuseV1Options, FuseVersion } from '@electron/fuses';
+// import { FusesPlugin } from '@electron-forge/plugin-fuses';
+// import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
-import { mainConfig } from './webpack.main.config';
-import { rendererConfig } from './webpack.renderer.config';
+const mainConfig = require('./webpack.main.config');
+const rendererConfig = require('./webpack.renderer.config');
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    name: 'HBUI',
+    executableName: 'hbui',
+    appBundleId: 'com.hbui.app',
+    appCategoryType: 'public.app-category.developer-tools',
+    appVersion: '1.0.0',
+    buildVersion: '1.0.0',
+    appCopyright: 'Copyright © 2024 HBUI Team',
+    protocols: [
+      {
+        name: 'HBUI Protocol',
+        schemes: ['hbui']
+      }
+    ]
   },
   rebuildConfig: {},
-  makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerRpm({}), new MakerDeb({})],
+  makers: [
+    // Windows
+    new MakerSquirrel({
+      name: 'HBUI',
+      setupExe: 'HBUI-Setup.exe',
+      authors: 'HBUI Team',
+      description: 'Modern GUI for Homebrew package manager'
+    }),
+    // macOS
+    new MakerZIP({}, ['darwin']),
+    // Linux
+    new MakerDeb({
+      options: {
+        name: 'hbui',
+        productName: 'HBUI',
+        genericName: 'Homebrew GUI',
+        description: 'Modern GUI for Homebrew package manager',
+        categories: ['Development', 'Utility'],
+        maintainer: 'HBUI Team <team@hbui.app>',
+        homepage: 'https://github.com/senma231/HBUI'
+      }
+    }),
+    new MakerRpm({
+      options: {
+        name: 'hbui',
+        productName: 'HBUI',
+        genericName: 'Homebrew GUI',
+        description: 'Modern GUI for Homebrew package manager',
+        categories: ['Development', 'Utility'],
+        maintainer: 'HBUI Team <team@hbui.app>',
+        homepage: 'https://github.com/senma231/HBUI'
+      }
+    })
+  ],
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({
@@ -25,11 +71,11 @@ const config: ForgeConfig = {
         config: rendererConfig,
         entryPoints: [
           {
-            html: './src/index.html',
-            js: './src/renderer.ts',
+            html: './src/renderer/index.html',
+            js: './src/renderer/index.tsx',
             name: 'main_window',
             preload: {
-              js: './src/preload.ts',
+              js: './src/main/preload.ts',
             },
           },
         ],
@@ -37,6 +83,8 @@ const config: ForgeConfig = {
     }),
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
+    // Disabled for now due to Electron version compatibility
+    /*
     new FusesPlugin({
       version: FuseVersion.V1,
       [FuseV1Options.RunAsNode]: false,
@@ -46,6 +94,7 @@ const config: ForgeConfig = {
       [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
       [FuseV1Options.OnlyLoadAppFromAsar]: true,
     }),
+    */
   ],
 };
 
