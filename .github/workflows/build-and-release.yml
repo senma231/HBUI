@@ -1,4 +1,4 @@
-name: Build and Release Homebrew UI
+name: Build and Release HBUI
 
 on:
   push:
@@ -7,14 +7,12 @@ on:
   workflow_dispatch:  # Allow manual triggering
     inputs:
       version:
-        description: 'Version to build (e.g., v1.0.0)'
+        description: 'Version to build (e.g., 1.0.0)'
         required: true
-        default: 'v1.0.0'
+        default: '1.0.0'
 
 env:
   NODE_VERSION: '18'
-  ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
-  ELECTRON_BUILDER_CACHE: ${{ github.workspace }}/.cache/electron-builder
 
 jobs:
   build:
@@ -28,18 +26,15 @@ jobs:
           - os: macos-latest
             platform: darwin
             arch: universal
-            artifact_name: 'Homebrew-UI-macOS-Universal'
+            artifact_name: 'HBUI-macOS-Universal'
+            build_command: 'package:mac'
             
           # Linux builds
           - os: ubuntu-latest
             platform: linux
             arch: x64
-            artifact_name: 'Homebrew-UI-Linux-x64'
-            
-          - os: ubuntu-latest
-            platform: linux
-            arch: arm64
-            artifact_name: 'Homebrew-UI-Linux-ARM64'
+            artifact_name: 'HBUI-Linux-x64'
+            build_command: 'package'
 
     steps:
       - name: Checkout code
@@ -64,22 +59,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libnss3-dev libatk-bridge2.0-dev libdrm2-dev libxcomposite-dev libxdamage-dev libxrandr-dev libgbm-dev libxss1-dev libasound2-dev
 
-      - name: Cache Electron
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.ELECTRON_CACHE }}
-          key: ${{ runner.os }}-electron-cache-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-electron-cache-
-
-      - name: Cache Electron Builder
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.ELECTRON_BUILDER_CACHE }}
-          key: ${{ runner.os }}-electron-builder-cache-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-electron-builder-cache-
-
       - name: Install dependencies
         run: npm ci
 
@@ -90,110 +69,151 @@ jobs:
         run: |
           npm test || echo "Tests completed with warnings"
 
-      - name: Package application (macOS Universal)
+      - name: Package application (macOS)
         if: matrix.platform == 'darwin'
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false  # Disable code signing for now
         run: |
-          npm run package:mac
+          npm run ${{ matrix.build_command }}
 
-      - name: Package application (Linux x64)
-        if: matrix.platform == 'linux' && matrix.arch == 'x64'
+      - name: Package application (Linux)
+        if: matrix.platform == 'linux'
         run: |
-          npm run package:linux:x64
+          npm run ${{ matrix.build_command }}
 
-      - name: Package application (Linux ARM64)
-        if: matrix.platform == 'linux' && matrix.arch == 'arm64'
+      - name: Create distribution artifacts (macOS)
+        if: matrix.platform == 'darwin'
         run: |
-          npm run package:linux:arm64
+          mkdir -p dist-artifacts
+          # Copy electron-builder outputs
+          if [ -d "dist" ]; then
+            find dist -name "*.dmg" -exec cp {} dist-artifacts/ \;
+          fi
+          # Copy electron-forge outputs
+          if [ -d "out" ]; then
+            find out -name "*.dmg" -exec cp {} dist-artifacts/ \;
+            find out -name "*.zip" -exec cp {} dist-artifacts/ \;
+          fi
+          ls -la dist-artifacts/
 
-      - name: List build outputs
+      - name: Create distribution artifacts (Linux)
+        if: matrix.platform == 'linux'
         run: |
-          echo "Build outputs:"
-          find dist/ -type f -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.tar.gz" | head -20
+          mkdir -p dist-artifacts
+          # Copy electron-builder outputs
+          if [ -d "dist" ]; then
+            find dist -name "*.AppImage" -exec cp {} dist-artifacts/ \;
+            find dist -name "*.deb" -exec cp {} dist-artifacts/ \;
+            find dist -name "*.rpm" -exec cp {} dist-artifacts/ \;
+          fi
+          # Copy electron-forge outputs
+          if [ -d "out" ]; then
+            find out -name "*.deb" -exec cp {} dist-artifacts/ \;
+            find out -name "*.rpm" -exec cp {} dist-artifacts/ \;
+            find out -name "*.zip" -exec cp {} dist-artifacts/ \;
+          fi
+          ls -la dist-artifacts/
 
       - name: Calculate checksums
         run: |
-          cd dist
-          find . -type f \( -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.tar.gz" \) -exec sha256sum {} \; > checksums-${{ matrix.artifact_name }}.txt
-          cat checksums-${{ matrix.artifact_name }}.txt
+          cd dist-artifacts
+          if [ "$(ls -A .)" ]; then
+            find . -type f -exec sha256sum {} \; > checksums-${{ matrix.artifact_name }}.txt
+            cat checksums-${{ matrix.artifact_name }}.txt
+          else
+            echo "No artifacts found to checksum"
+          fi
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            dist/*.dmg
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.rpm
-            dist/*.tar.gz
-            dist/checksums-${{ matrix.artifact_name }}.txt
+            dist-artifacts/*
           retention-days: 30
 
   release:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          path: artifacts
+          path: release-artifacts
 
       - name: Prepare release assets
         run: |
           mkdir -p release-assets
-          find artifacts/ -type f \( -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.tar.gz" -o -name "checksums-*.txt" \) -exec cp {} release-assets/ \;
+          find release-artifacts/ -type f \( -name "*.dmg" -o -name "*.AppImage" -o -name "*.deb" -o -name "*.rpm" -o -name "*.zip" -o -name "checksums-*.txt" \) -exec cp {} release-assets/ \;
           ls -la release-assets/
 
       - name: Generate release notes
         id: release_notes
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="v${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           
           cat > release-notes.md << EOF
-          # Homebrew UI $VERSION
+          # HBUI $VERSION - Modern Homebrew GUI Client
           
           ## 🎉 Features
-          - Complete Homebrew package management GUI
-          - Multi-language support (简体中文, 繁體中文, English)
-          - Package tagging and batch operations
-          - Service and cache management
-          - Cross-platform support (macOS, Linux)
+          - 🔍 Advanced package search with filtering and history
+          - 📦 Complete package management (install, uninstall, update)
+          - 🏷️ Custom package tagging and organization system
+          - 📋 Batch operations for multiple packages
+          - ⚙️ Service and cache management
+          - 🌍 Multi-language support (English, 简体中文, 繁體中文)
+          - 🖥️ Cross-platform compatibility (macOS, Linux)
           
           ## 📦 Downloads
+          Choose the appropriate package for your operating system:
           - **macOS**: Download the Universal Binary (.dmg) for both Intel and Apple Silicon Macs
-          - **Linux**: Choose between x64 and ARM64 versions (.AppImage, .deb, .rpm)
+          - **Linux**: Choose .deb for Debian/Ubuntu or .AppImage for universal compatibility
           
           ## 🔒 Verification
           All downloads include SHA256 checksums for integrity verification.
           
           ## 📋 System Requirements
-          - macOS 10.15+ (Catalina) or Linux with modern desktop environment
-          - 4GB RAM minimum, 8GB recommended
-          - 500MB free disk space
+          - **macOS**: 10.15+ (Catalina) or later
+          - **Linux**: Modern desktop environment with X11 or Wayland
+          - **Memory**: 4GB RAM minimum, 8GB recommended
+          - **Storage**: 500MB free disk space
+          - **Dependencies**: Homebrew must be installed
           
           ## 🚀 Installation
           1. Download the appropriate package for your system
           2. Verify the checksum (optional but recommended)
-          3. Install and run the application
+          3. Install and run the application:
+             - **macOS**: Open the .dmg and drag to Applications
+             - **Linux**: Install .deb with \`sudo dpkg -i\` or run .AppImage directly
           4. Ensure Homebrew is installed on your system
           
-          For detailed installation instructions, see the [README](https://github.com/senma231/HBUI/blob/main/README.md).
+          ## 🆕 What's New in This Release
+          - Complete package management functionality
+          - Advanced tagging and organization system
+          - Batch operations for improved efficiency
+          - Modern, responsive user interface
+          - Full cross-platform support
+          - Comprehensive multi-language support
+          
+          For detailed documentation, see the [README](https://github.com/senma231/HBUI/blob/main/README.md).
           EOF
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ steps.release_notes.outputs.VERSION }}
-          name: Homebrew UI ${{ steps.release_notes.outputs.VERSION }}
+          name: HBUI ${{ steps.release_notes.outputs.VERSION }}
           body_path: release-notes.md
           files: release-assets/*
           draft: false
@@ -210,17 +230,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
       - name: Run security audit
         run: |
           npm audit --audit-level=moderate || echo "Security audit completed with warnings"
 
       - name: Download artifacts for scanning
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: Homebrew-UI-Linux-x64
+          name: HBUI-Linux-x64
           path: scan-artifacts
 
-      - name: Scan for malware (basic check)
+      - name: Basic security checks
         run: |
           echo "Performing basic security checks..."
           file scan-artifacts/* || echo "File type check completed"
