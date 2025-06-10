@@ -11,6 +11,11 @@ on:
         required: true
         default: 'v1.0.0'
 
+permissions:
+  contents: write  # Required for creating releases
+  actions: read    # Required for downloading artifacts
+  packages: read   # Required for package operations
+
 env:
   NODE_VERSION: '18'
   ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
