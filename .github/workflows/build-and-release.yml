@@ -84,11 +84,11 @@ jobs:
       - name: List build outputs
         run: |
           echo "Build outputs:"
-          find dist/ -type f -name "*.dmg" | head -20
+          find release/ -type f -name "*.dmg" | head -20
 
       - name: Calculate checksums
         run: |
-          cd dist
+          cd release
           find . -type f -name "*.dmg" -exec sha256sum {} \; > checksums-${{ matrix.artifact_name }}.txt
           cat checksums-${{ matrix.artifact_name }}.txt
 
@@ -97,8 +97,8 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: |
-            dist/*.dmg
-            dist/checksums-${{ matrix.artifact_name }}.txt
+            release/*.dmg
+            release/checksums-${{ matrix.artifact_name }}.txt
           retention-days: 30
 
   release:
