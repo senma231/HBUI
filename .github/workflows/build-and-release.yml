@@ -29,11 +29,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # macOS builds (Universal Binary) - Primary target for Homebrew
+          # macOS builds (x64) - Primary target for Homebrew
           - os: macos-latest
             platform: darwin
-            arch: universal
-            artifact_name: 'Homebrew-UI-macOS-Universal'
+            arch: x64
+            artifact_name: 'HomebrewUI-macOS-x64'
 
     steps:
       - name: Checkout code
@@ -80,7 +80,7 @@ jobs:
         run: |
           npm test || echo "Tests completed with warnings"
 
-      - name: Package application (macOS Universal)
+      - name: Package application (macOS x64)
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false  # Disable code signing for now
         run: |
@@ -90,12 +90,26 @@ jobs:
         run: |
           echo "Build outputs:"
           find release/ -type f -name "*.dmg" | head -20
+          echo "All files in release directory:"
+          find release/ -type f | head -20
 
       - name: Calculate checksums
         run: |
           cd release
-          find . -type f -name "*.dmg" -exec sha256sum {} \; > checksums-${{ matrix.artifact_name }}.txt
-          cat checksums-${{ matrix.artifact_name }}.txt
+          # Find DMG files and generate checksums
+          DMG_FILES=$(find . -type f -name "*.dmg")
+          if [ -n "$DMG_FILES" ]; then
+            echo "Found DMG files, generating checksums..."
+            find . -type f -name "*.dmg" -exec sha256sum {} \; > checksums-${{ matrix.artifact_name }}.txt
+            echo "Generated checksums:"
+            cat checksums-${{ matrix.artifact_name }}.txt
+          else
+            echo "No DMG files found, creating placeholder checksum file..."
+            echo "# No DMG files were generated during build" > checksums-${{ matrix.artifact_name }}.txt
+            echo "# This indicates a build failure in the packaging step" >> checksums-${{ matrix.artifact_name }}.txt
+            echo "Generated placeholder checksums file:"
+            cat checksums-${{ matrix.artifact_name }}.txt
+          fi
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

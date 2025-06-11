@@ -15,7 +15,7 @@
     "build:renderer": "NODE_ENV=production webpack --config webpack.renderer.config.js",
     "package": "node build-and-package.js",
     "package:electron-builder": "npm run build && electron-builder",
-    "package:mac": "npm run build && electron-builder --mac --universal",
+    "package:mac": "npm run build && electron-builder --mac --x64",
     "package:linux:x64": "npm run build && electron-builder --linux --x64",
     "package:linux:arm64": "npm run build && electron-builder --linux --arm64",
     "package:all": "npm run build && electron-builder --mac --linux --universal",
@@ -93,7 +93,7 @@
         {
           "target": "dmg",
           "arch": [
-            "universal"
+            "x64"
           ]
         }
       ],
